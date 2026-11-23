@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Galaxia de Amor</title>
+    <!-- Tailwind CSS para diseño responsivo y utilidades -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fuentes elegantes de Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Estilos base y tipografía */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #110724 0%, #060212 60%, #020108 100%);
+            font-family: 'Quicksand', sans-serif;
+            color: #ffffff;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .font-title {
+            font-family: 'Cinzel Decorative', cursive;
+        }
+
+        /* Canvas ocupando toda la pantalla */
+        #galaxyCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            cursor: crosshair;
+        }
+
+        /* Capa de interfaz sobre el canvas */
+        .ui-layer {
+            position: fixed;
+            z-index: 10;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 1.5rem;
+        }
+
+        .pointer-events-auto {
+            pointer-events: auto;
+        }
+
+        /* Efecto de brillo para el título */
+        .title-glow {
+            text-shadow: 0 0 15px rgba(255, 105, 180, 0.8),
+                         0 0 30px rgba(157, 78, 221, 0.6),
+                         0 0 45px rgba(76, 201, 240, 0.4);
+            animation: pulseGlow 4s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            0% {
+                text-shadow: 0 0 15px rgba(255, 105, 180, 0.7), 0 0 30px rgba(157, 78, 221, 0.5);
+            }
+            100% {
+                text-shadow: 0 0 25px rgba(255, 209, 102, 0.9), 0 0 45px rgba(255, 77, 148, 0.8);
+            }
+        }
+
+        /* Botones estilo cristal espacial */
+        .glass-btn {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-btn:hover {
+            background: rgba(255, 77, 148, 0.25);
+            border-color: rgba(255, 150, 200, 0.6);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 77, 148, 0.4);
+        }
+
+        .glass-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Modal estilo glassmorphism */
+        .glass-modal {
+            background: rgba(18, 9, 36, 0.78);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 150, 200, 0.3);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(157, 78, 221, 0.3);
+        }
+
+        /* Animación de entrada del modal */
+        .modal-enter {
+            animation: modalFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.92) translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Lienzo principal de la galaxia -->
+    <canvas id="galaxyCanvas"></canvas>
+
+    <!-- Capa de Interfaz de Usuario -->
+    <div class="ui-layer">
+        <!-- Encabezado -->
+        <header class="text-center mt-2 sm:mt-4">
+            <h1 class="font-title text-3xl sm:text-5xl md:text-6xl font-bold tracking-wider text-white title-glow">
+                Galaxia de Amor
+            </h1>
+            <p class="text-xs sm:text-sm text-pink-200/80 mt-2 tracking-widest uppercase">
+                Toca una frase o haz clic en el espacio para crear magia
+            </p>
+        </header>
+
+        <!-- Controles inferiores -->
+        <footer class="flex flex-wrap justify-center items-center gap-3 mb-2 sm:mb-4 pointer-events-auto">
+            <button id="btnAddPhrase" class="glass-btn px-5 py-2.5 rounded-full text-sm font-semibold text-pink-100 flex items-center gap-2">
+                <span>✨</span> Agregar Frase
+            </button>
+            <button id="btnStarShower" class="glass-btn px-5 py-2.5 rounded-full text-sm font-semibold text-blue-100 flex items-center gap-2">
+                <span>🌠</span> Lluvia de Estrellas
+            </button>
+            <button id="btnTogglePause" class="glass-btn px-4 py-2.5 rounded-full text-sm font-semibold text-purple-100 flex items-center gap-2">
+                <span id="pauseIcon">⏸️</span> <span id="pauseText">Pausar</span>
+            </button>
+        </footer>
+    </div>
+
+    <!-- Modal para ver mensaje especial o agregar nueva frase -->
+    <div id="loveModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div class="glass-modal rounded-3xl max-w-md w-full p-6 sm:p-8 text-center modal-enter relative">
+            <!-- Botón cerrar -->
+            <button id="closeModal" class="absolute top-4 right-5 text-pink-200/70 hover:text-white text-2xl leading-none transition-colors">
+                &times;
+            </button>
+
+            <!-- Vista: Mensaje Especial -->
+            <div id="viewMessageMode">
+                <div class="text-4xl mb-3">💖</div>
+                <h2 id="modalPhraseTitle" class="font-title text-2xl sm:text-3xl text-pink-300 mb-3"></h2>
+                <p id="modalPhraseDesc" class="text-pink-100/90 text-sm sm:text-base leading-relaxed mb-6"></p>
+                <button id="btnCloseMsg" class="glass-btn px-6 py-2.5 rounded-full text-sm font-semibold text-white">
+                    Seguir explorando
+                </button>
+            </div>
+
+            <!-- Vista: Agregar Nueva Frase -->
+            <div id="addPhraseMode" class="hidden">
+                <div class="text-4xl mb-2">🌌</div>
+                <h2 class="font-title text-2xl text-pink-300 mb-2">Nueva Estrella de Amor</h2>
+                <p class="text-xs sm:text-sm text-pink-100/80 mb-5">
+                    Escribe una palabra o frase especial para que orbite eternamente en nuestra galaxia.
+                </p>
+                <form id="newPhraseForm" class="space-y-4">
+                    <input 
+                        type="text" 
+                        id="inputPhrase" 
+                        maxlength="32" 
+                        placeholder="Ej: Eres mi sueño hecho realidad..." 
+                        required
+                        class="w-full px-4 py-3 rounded-xl bg-white/10 border border-pink-300/30 text-white placeholder-pink-200/50 focus:outline-none focus:border-pink-400 focus:ring-1 focus:ring-pink-400 text-sm"
+                    >
+                    <input 
+                        type="text" 
+                        id="inputDedication" 
+                        maxlength="120" 
+                        placeholder="Mensaje secreto al tocarla (opcional)" 
+                        class="w-full px-4 py-3 rounded-xl bg-white/10 border border-purple-300/30 text-white placeholder-purple-200/50 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400 text-sm"
+                    >
+                    <div class="flex justify-center gap-3 pt-2">
+                        <button type="button" id="btnCancelAdd" class="px-5 py-2.5 rounded-full text-sm font-medium text-pink-200 hover:bg-white/10 transition">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="glass-btn px-6 py-2.5 rounded-full text-sm font-semibold text-white bg-pink-500/30 border-pink-400/50">
+                            Enviar a la Galaxia ✨
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * GALAXIA DE AMOR - Lógica principal en HTML5 Canvas
+         */
+        const canvas = document.getElementById('galaxyCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Estado global de la aplicación
+        let width, height, dpr;
+        let centerX, centerY;
+        let isPaused = false;
+        let time = 0;
+
+        // Variables para efecto de profundidad / paralaje con mouse o touch
+        let targetParallaxX = 0;
+        let targetParallaxY = 0;
+        let currentParallaxX = 0;
+        let currentParallaxY = 0;
+
+        // Paleta de colores galácticos
+        const colors = {
+            pink: '#ff4d94',
+            lightPink: '#ff99c8',
+            violet: '#9d4edd',
+            blue: '#4cc9f0',
+            gold: '#ffd166',
+            white: '#ffffff'
+        };
+
+        // Frases románticas iniciales con sus dedicatorias
+        const phrasesData = [
+            { text: "Te Amo", msg: "Más allá de las estrellas y del tiempo, mi corazón siempre te elige a ti." },
+            { text: "Eres mi universo", msg: "En tu sonrisa encuentro todas las constelaciones que iluminan mis días." },
+            { text: "Mi alma gemela", msg: "Nuestras almas estaban destinadas a encontrarse en esta inmensidad." },
+            { text: "Mi luz", msg: "Incluso en las noches más oscuras, tu amor es el faro que me guía." },
+            { text: "Juntos por siempre", msg: "Cada segundo a tu lado es un tesoro que quiero guardar eternamente." },
+            { text: "Hasta la luna y volver", msg: "Un viaje infinito de cariño, risas y sueños compartidos contigo." },
+            { text: "Mi felicidad", msg: "No necesito buscar más; la alegría más pura vive en tu abrazo." },
+            { text: "Mi destino", msg: "Todos mis caminos me trajeron hasta ti, el mejor lugar del mundo." },
+            { text: "Eres todo para mí", msg: "Mi presente, mi futuro y la razón de mis mejores pensamientos." },
+            { text: "Mi cielo", msg: "Donde mis sueños vuelan libres y mi corazón descansa en calma." },
+            { text: "Mi compañera", msg: "De aventuras, de silencios, de vida y de este amor infinito." },
+            { text: "Mi paz", msg: "En tus brazos el ruido del mundo desaparece y todo está bien." }
+        ];
+
+        // Arreglos de entidades
+        let bgStars = [];
+        let shootingStars = [];
+        let heartParticles = [];
+        let clickParticles = [];
+        let floatingPhrases = [];
+
+        /**
+         * Ajusta el tamaño del canvas de forma responsiva
+         */
+        function resizeCanvas() {
+            dpr = window.devicePixelRatio || 1;
+            width = window.innerWidth;
+            height = window.innerHeight;
+            
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            ctx.scale(dpr, dpr);
+
+            centerX = width / 2;
+            centerY = height / 2;
+
+            // Re-inicializar elementos dependientes del tamaño
+            initBackgroundStars();
+            initHeartGalaxy();
+        }
+
+        /**
+         * Crea estrellas de fondo parpadeantes
+         */
+        function initBackgroundStars() {
+            bgStars = [];
+            const starCount = Math.min(Math.floor((width * height) / 3500), 350);
+            const starColors = [colors.white, colors.blue, colors.lightPink, colors.gold];
+
+            for (let i = 0; i < starCount; i++) {
+                bgStars.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    radius: Math.random() * 1.6 + 0.3,
+                    color: starColors[Math.floor(Math.random() * starColors.length)],
+                    alpha: Math.random(),
+                    twinkleSpeed: Math.random() * 0.02 + 0.005,
+                    depth: Math.random() * 0.5 + 0.1 // Para efecto paralaje
+                });
+            }
+        }
+
+        /**
+         * Genera la galaxia en espiral con forma de corazón
+         */
+        function initHeartGalaxy() {
+            heartParticles = [];
+            const numParticles = Math.min(Math.floor((width + height) * 0.55), 1100);
+            const scale = Math.min(width, height) * 0.0155; // Escala responsiva del corazón
+            const palette = [colors.pink, colors.violet, colors.blue, colors.gold, colors.lightPink];
+
+            for (let i = 0; i < numParticles; i++) {
+                // Parámetro t de 0 a 2*PI para la forma de corazón
+                const t = Math.random() * Math.PI * 2;
+                
+                // Ecuación paramétrica clásica del corazón
+                const hx = 16 * Math.pow(Math.sin(t), 3);
+                const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+
+                // Añadir dispersión en espiral para efecto galaxia
+                const armOffset = (Math.random() - 0.5) * 4.5;
+                const spread = (Math.random() * 0.65 + 0.35);
+                
+                const x = hx * scale * spread + armOffset * (Math.random() * 6);
+                const y = hy * scale * spread + armOffset * (Math.random() * 6);
+
+                heartParticles.push({
+                    baseX: x,
+                    baseY: y,
+                    radius: Math.random() * 2.2 + 0.6,
+                    color: palette[Math.floor(Math.random() * palette.length)],
+                    alpha: Math.random() * 0.7 + 0.3,
+                    angleOffset: Math.random() * Math.PI * 2,
+                    orbitSpeed: (Math.random() * 0.004 + 0.001) * (Math.random() > 0.5 ? 1 : -1),
+                    pulseSpeed: Math.random() * 0.03 + 0.01
+                });
+            }
+        }
+
+        /**
+         * Inicializa las frases flotantes alrededor y dentro de la galaxia
+         */
+        function initFloatingPhrases() {
+            floatingPhrases = [];
+            const palette = [colors.lightPink, colors.gold, colors.blue, '#e0aaff', colors.white];
+
+            phrasesData.forEach((item, index) => {
+                const angle = (index / phrasesData.length) * Math.PI * 2;
+                // Distancia orbital variada para que algunas estén cerca y otras más afuera
+                const radiusFactor = 0.22 + (index % 3) * 0.11; 
+                
+                floatingPhrases.push({
+                    text: item.text,
+                    msg: item.msg,
+                    angle: angle,
+                    radiusFactor: radiusFactor,
+                    speed: (0.0008 + Math.random() * 0.0007) * (index % 2 === 0 ? 1 : -1),
+                    color: palette[index % palette.length],
+                    fontSize: width < 640 ? 13 : 16,
+                    x: 0,
+                    y: 0,
+                    isHovered: false,
+                    floatOffset: Math.random() * Math.PI * 2
+                });
+            });
+        }
+
+        /**
+         * Crea una estrella fugaz
+         */
+        function spawnShootingStar() {
+            const startX = Math.random() * width;
+            const startY = Math.random() * (height * 0.5);
+            const length = Math.random() * 80 + 50;
+            const speed = Math.random() * 8 + 7;
+            const angle = Math.PI / 4 + (Math.random() * 0.2 - 0.1); // Diagonal hacia abajo
+
+            shootingStars.push({
+                x: startX,
+                y: startY,
+                length: length,
+                speed: speed,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                alpha: 1
+            });
+        }
+
+        /**
+         * Crea una explosión de partículas de estrellas y corazones al hacer clic
+         */
+        function spawnClickBurst(x, y, count = 22) {
+            const burstColors = [colors.pink, colors.gold, colors.blue, colors.lightPink, colors.white];
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 4.5 + 1.5;
+                clickParticles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: Math.random() * 5 + 3,
+                    color: burstColors[Math.floor(Math.random() * burstColors.length)],
+                    alpha: 1,
+                    decay: Math.random() * 0.02 + 0.015,
+                    type: Math.random() > 0.45 ? 'heart' : 'star'
+                });
+            }
+        }
+
+        /**
+         * Dibuja un corazón pequeño en el canvas
+         */
+        function drawMiniHeart(x, y, size, color, alpha) {
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = color;
+            ctx.translate(x, y);
+            ctx.beginPath();
+            ctx.moveTo(0, size * 0.3);
+            ctx.bezierCurveTo(-size * 0.5, -size * 0.3, -size, size * 0.2, 0, size);
+            ctx.bezierCurveTo(size, size * 0.2, size * 0.5, -size * 0.3, 0, size * 0.3);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        /**
+         * Bucle principal de animación
+         */
+        function animate() {
+            if (!isPaused) {
+                time += 0.016;
+            }
+
+            // Suavizar el movimiento de paralaje
+            currentParallaxX += (targetParallaxX - currentParallaxX) * 0.05;
+            currentParallaxY += (targetParallaxY - currentParallaxY) * 0.05;
+
+            // Limpiar fondo con ligero rastro para suavidad
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. Dibujar nebulosa central suave
+            const nebGradient = ctx.createRadialGradient(
+                centerX + currentParallaxX * 15,
+                centerY + currentParallaxY * 15,
+                10,
+                centerX,
+                centerY,
+                Math.min(width, height) * 0.55
+            );
+            nebGradient.addColorStop(0, 'rgba(157, 78, 221, 0.16)');
+            nebGradient.addColorStop(0.45, 'rgba(255, 77, 148, 0.08)');
+            nebGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = nebGradient;
+            ctx.fillRect(0, 0, width, height);
+
+            // 2. Dibujar estrellas de fondo
+            bgStars.forEach(star => {
+                if (!isPaused) {
+                    star.alpha += star.twinkleSpeed;
+                    if (star.alpha > 1 || star.alpha < 0.15) {
+                        star.twinkleSpeed *= -1;
+                    }
+                }
+                const px = star.x + currentParallaxX * 30 * star.depth;
+                const py = star.y + currentParallaxY * 30 * star.depth;
+
+                ctx.beginPath();
+                ctx.arc(px, py, star.radius, 0, Math.PI * 2);
+                ctx.fillStyle = star.color;
+                ctx.globalAlpha = Math.max(0.1, Math.min(1, star.alpha));
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+
+            // 3. Estrellas fugaces aleatorias
+            if (!isPaused && Math.random() < 0.015) {
+                spawnShootingStar();
+            }
+            for (let i = shootingStars.length - 1; i >= 0; i--) {
+                const s = shootingStars[i];
+                if (!isPaused) {
+                    s.x += s.vx;
+                    s.y += s.vy;
+                    s.alpha -= 0.015;
+                }
+                if (s.alpha <= 0) {
+                    shootingStars.splice(i, 1);
+                    continue;
+                }
+
+                const grad = ctx.createLinearGradient(s.x, s.y, s.x - s.vx * 6, s.y - s.vy * 6);
+                grad.addColorStop(0, `rgba(255, 255, 255, ${s.alpha})`);
+                grad.addColorStop(1, 'rgba(76, 201, 240, 0)');
+
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(s.x, s.y);
+                ctx.lineTo(s.x - s.vx * 6, s.y - s.vy * 6);
+                ctx.stroke();
+            }
+
+            // 4. Dibujar Galaxia en Espiral con forma de Corazón
+            const heartCenterX = centerX + currentParallaxX * 25;
+            const heartCenterY = centerY + currentParallaxY * 25;
+
+            heartParticles.forEach(p => {
+                if (!isPaused) {
+                    p.angleOffset += p.orbitSpeed;
+                }
+                // Ligera rotación y respiración del corazón
+                const breathe = 1 + Math.sin(time * 1.5) * 0.03;
+                const rotX = p.baseX * Math.cos(p.angleOffset * 0.2) - p.baseY * Math.sin(p.angleOffset * 0.2);
+                const rotY = p.baseX * Math.sin(p.angleOffset * 0.2) + p.baseY * Math.cos(p.angleOffset * 0.2);
+
+                const px = heartCenterX + rotX * breathe;
+                const py = heartCenterY + rotY * breathe;
+
+                ctx.beginPath();
+                ctx.arc(px, py, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.alpha * (0.75 + Math.sin(time * 3 + p.angleOffset) * 0.25);
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = p.color;
+                ctx.fill();
+            });
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = 1;
+
+            // 5. Dibujar Frases Románticas Orbitando
+            const minDim = Math.min(width, height);
+            floatingPhrases.forEach(phrase => {
+                if (!isPaused && !phrase.isHovered) {
+                    phrase.angle += phrase.speed;
+                }
+
+                const orbitRx = minDim * phrase.radiusFactor * 1.15;
+                const orbitRy = minDim * phrase.radiusFactor * 0.85;
+
+                phrase.x = heartCenterX + Math.cos(phrase.angle) * orbitRx;
+                phrase.y = heartCenterY + Math.sin(phrase.angle) * orbitRy + Math.sin(time * 2 + phrase.floatOffset) * 6;
+
+                ctx.save();
+                ctx.font = `${phrase.isHovered ? '700' : '600'} ${phrase.isHovered ? phrase.fontSize + 3 : phrase.fontSize}px 'Quicksand', sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                // Brillo de la frase
+                ctx.shadowBlur = phrase.isHovered ? 18 : 10;
+                ctx.shadowColor = phrase.isHovered ? colors.gold : phrase.color;
+                ctx.fillStyle = phrase.isHovered ? '#ffffff' : phrase.color;
+
+                ctx.fillText(phrase.text, phrase.x, phrase.y);
+                ctx.restore();
+            });
+
+            // 6. Dibujar partículas de clic (estrellas y corazones)
+            for (let i = clickParticles.length - 1; i >= 0; i--) {
+                const cp = clickParticles[i];
+                if (!isPaused) {
+                    cp.x += cp.vx;
+                    cp.y += cp.vy;
+                    cp.vy += 0.05; // Ligera gravedad espacial
+                    cp.alpha -= cp.decay;
+                }
+                if (cp.alpha <= 0) {
+                    clickParticles.splice(i, 1);
+                    continue;
+                }
+
+                if (cp.type === 'heart') {
+                    drawMiniHeart(cp.x, cp.y, cp.size, cp.color, cp.alpha);
+                } else {
+                    ctx.save();
+                    ctx.globalAlpha = cp.alpha;
+                    ctx.fillStyle = cp.color;
+                    ctx.beginPath();
+                    ctx.arc(cp.x, cp.y, cp.size * 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // ==========================================
+        // INTERACTIVIDAD: MOUSE, TOUCH Y CLICS
+        // ==========================================
+
+        function handlePointerMove(clientX, clientY) {
+            // Calcular paralaje normalizado (-1 a 1)
+            targetParallaxX = (clientX / width - 0.5) * 2;
+            targetParallaxY = (clientY / height - 0.5) * 2;
+
+            // Detectar si el cursor está sobre alguna frase
+            let hoveringAny = false;
+            floatingPhrases.forEach(phrase => {
+                const dist = Math.hypot(clientX - phrase.x, clientY - phrase.y);
+                if (dist < 65) {
+                    phrase.isHovered = true;
+                    hoveringAny = true;
+                } else {
+                    phrase.isHovered = false;
+                }
+            });
+            canvas.style.cursor = hoveringAny ? 'pointer' : 'crosshair';
+        }
+
+        function handlePointerClick(clientX, clientY) {
+            // Siempre lanzar partículas al hacer clic
+            spawnClickBurst(clientX, clientY, 24);
+
+            // Verificar si se hizo clic en una frase
+            for (let i = floatingPhrases.length - 1; i >= 0; i--) {
+                const phrase = floatingPhrases[i];
+                const dist = Math.hypot(clientX - phrase.x, clientY - phrase.y);
+                if (dist < 70) {
+                    openMessageModal(phrase.text, phrase.msg);
+                    break;
+                }
+            }
+        }
+
+        window.addEventListener('mousemove', (e) => handlePointerMove(e.clientX, e.clientY));
+        canvas.addEventListener('click', (e) => handlePointerClick(e.clientX, e.clientY));
+
+        // Soporte táctil para móviles y tablets
+        canvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                handlePointerMove(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: true });
+
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 0) {
+                handlePointerClick(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        }, { passive: true });
+
+        // ==========================================
+        // CONTROLES DE INTERFAZ Y MODAL
+        // ==========================================
+
+        const loveModal = document.getElementById('loveModal');
+        const viewMessageMode = document.getElementById('viewMessageMode');
+        const addPhraseMode = document.getElementById('addPhraseMode');
+        const modalPhraseTitle = document.getElementById('modalPhraseTitle');
+        const modalPhraseDesc = document.getElementById('modalPhraseDesc');
+
+        function openMessageModal(title, msg) {
+            viewMessageMode.classList.remove('hidden');
+            addPhraseMode.classList.add('hidden');
+            modalPhraseTitle.textContent = title;
+            modalPhraseDesc.textContent = msg || "Un destello eterno de nuestro amor en el universo.";
+            loveModal.classList.remove('hidden');
+            loveModal.classList.add('flex');
+        }
+
+        function openAddPhraseModal() {
+            viewMessageMode.classList.add('hidden');
+            addPhraseMode.classList.remove('hidden');
+            loveModal.classList.remove('hidden');
+            loveModal.classList.add('flex');
+            document.getElementById('inputPhrase').focus();
+        }
+
+        function closeModal() {
+            loveModal.classList.add('hidden');
+            loveModal.classList.remove('flex');
+        }
+
+        document.getElementById('closeModal').addEventListener('click', closeModal);
+        document.getElementById('btnCloseMsg').addEventListener('click', closeModal);
+        document.getElementById('btnCancelAdd').addEventListener('click', closeModal);
+        document.getElementById('btnAddPhrase').addEventListener('click', openAddPhraseModal);
+
+        // Cerrar modal al hacer clic fuera de la tarjeta
+        loveModal.addEventListener('click', (e) => {
+            if (e.target === loveModal) closeModal();
+        });
+
+        // Agregar nueva frase personalizada
+        document.getElementById('newPhraseForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const textInput = document.getElementById('inputPhrase');
+            const msgInput = document.getElementById('inputDedication');
+            const newText = textInput.value.trim();
+            const newMsg = msgInput.value.trim() || "Una nueva estrella que brilla solo para ti.";
+
+            if (newText) {
+                const palette = [colors.lightPink, colors.gold, colors.blue, '#e0aaff', colors.white];
+                floatingPhrases.push({
+                    text: newText,
+                    msg: newMsg,
+                    angle: Math.random() * Math.PI * 2,
+                    radiusFactor: 0.25 + Math.random() * 0.2,
+                    speed: (0.001 + Math.random() * 0.0006) * (Math.random() > 0.5 ? 1 : -1),
+                    color: palette[Math.floor(Math.random() * palette.length)],
+                    fontSize: width < 640 ? 14 : 17,
+                    x: centerX,
+                    y: centerY,
+                    isHovered: false,
+                    floatOffset: Math.random() * Math.PI * 2
+                });
+
+                // Efecto visual de celebración
+                spawnClickBurst(centerX, centerY, 35);
+                textInput.value = '';
+                msgInput.value = '';
+                closeModal();
+            }
+        });
+
+        // Botón lluvia de estrellas
+        document.getElementById('btnStarShower').addEventListener('click', () => {
+            for (let i = 0; i < 6; i++) {
+                setTimeout(spawnShootingStar, i * 180);
+            }
+            spawnClickBurst(centerX, centerY, 30);
+        });
+
+        // Botón Pausar / Reanudar
+        document.getElementById('btnTogglePause').addEventListener('click', () => {
+            isPaused = !isPaused;
+            document.getElementById('pauseIcon').textContent = isPaused ? '▶️' : '⏸️';
+            document.getElementById('pauseText').textContent = isPaused ? 'Reanudar' : 'Pausar';
+        });
+
+        // Inicialización al cargar la ventana
+        window.addEventListener('resize', resizeCanvas);
+        window.onload = function() {
+            resizeCanvas();
+            initFloatingPhrases();
+            animate();
+        };
+    </script>
+</body>
+</html>
